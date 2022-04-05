@@ -33,6 +33,8 @@ except (OSError, IOError) as e:
             plt.subplot(122), plt.imshow(img_binary, cmap='gray')
             plt.title('Binary'), plt.xticks([]), plt.yticks([])
             plt.show()
+            cv2.imwrite('figures/gauss.png', img_lp)
+            cv2.imwrite('figures/binary.png', img_binary)
             img_cnt = cv2.drawContours(img.copy(), contours, -1, (0, 0, 255), 3)
             cv2.imwrite('figures/all_contours.png', img_cnt)
             cv2.imshow('Contours', img_cnt)
@@ -55,6 +57,8 @@ except (OSError, IOError) as e:
             plt.subplot(122), plt.imshow(masked, cmap='gray')
             plt.title('Masked'), plt.xticks([]), plt.yticks([])
             plt.show()
+            cv2.imwrite('figures/mask.png', mask)
+            cv2.imwrite('figures/masked.png', masked)
         pixels = cv2.countNonZero(masked)
         features[i][1] = pixels
 
