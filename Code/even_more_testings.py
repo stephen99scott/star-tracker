@@ -65,6 +65,10 @@ except (OSError, IOError) as e:
             plt.subplot(224), plt.imshow(img_rot_270_final, cmap='gray')
             plt.title('Rotated 270 degrees'), plt.xticks([]), plt.yticks([])
             plt.show()
+            cv2.imwrite('figures/img_aug.png', img_final)
+            cv2.imwrite('figures/img_aug_rot_90.png', img_rot_90_final)
+            cv2.imwrite('figures/img_aug_rot_180.png', img_rot_180_final)
+            cv2.imwrite('figures/img_aug_rot_270.png', img_rot_270_final)
         imgs[i] = img_final
         imgs[i + NUM_IMAGES] = img_rot_90_final
         imgs[i + 2 * NUM_IMAGES] = img_rot_180_final
@@ -122,10 +126,10 @@ except (OSError, IOError) as e:
 
     early = EarlyStopping(monitor='val_accuracy', min_delta=0, patience=20, verbose=1, mode='auto')
 
-    batch_size = 32
-    epochs = 100
+    batch_size = 256
+    epochs = 1000
 
-    cnn_train = cnn.fit(x_train, y_train_hot, batch_size=128, epochs=epochs, verbose=1,
+    cnn_train = cnn.fit(x_train, y_train_hot, batch_size=batch_size, epochs=epochs, verbose=1,
                         validation_data=(x_valid, y_valid_hot), callbacks=[early])
     cnn.save('cnn_augmentation')
 
