@@ -16,7 +16,6 @@ from tensorflow.python.keras.utils.np_utils import to_categorical
 tf.random.set_seed(42)
 
 NUM_IMAGES = 2592
-SCALE_FACTOR = 10
 IMG_SIZE = 96
 NUM_ROTATIONS = 4
 
