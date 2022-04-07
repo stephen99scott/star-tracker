@@ -4,7 +4,7 @@ import seaborn as sb
 from matplotlib import pyplot as plt
 from sklearn import metrics
 from sklearn import preprocessing
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.svm import SVC
 
 NUM_IMAGES = 2592
@@ -105,13 +105,13 @@ ax = fig.add_subplot(projection='3d')
 ax.scatter(pca_train[:, 0], pca_train[:, 1], pca_train[:, 2], c=y_train)
 plt.show()
 
-# parameters = {'kernel': ('linear', 'rbf'), 'C': [0.01, 0.1, 1, 10, 100, 1000],
-#               'gamma': [0.001, 0.01, 0.1, 1, 10, 100, 1000]}
-# clf = GridSearchCV(SVC(), parameters, verbose=3)
-# clf.fit(x_train_normalized, y_train)
-# print(clf.best_score_)
-# print(clf.best_estimator_)
-# print(clf.best_params_)
+parameters = {'kernel': ('linear', 'rbf'), 'C': [0.01, 0.1, 1, 10, 100, 1000],
+              'gamma': [0.001, 0.01, 0.1, 1, 10, 100, 1000]}
+clf = GridSearchCV(SVC(), parameters, verbose=3)
+clf.fit(x_train_normalized, y_train)
+print(clf.best_score_)
+print(clf.best_estimator_)
+print(clf.best_params_)
 labels_verbose = ["North-East", "North-West", "South-East", "South-West"]
 model = SVC(kernel='rbf', gamma=1000, C=100)
 model.fit(x_train_normalized, y_train)
