@@ -126,8 +126,8 @@ except (OSError, IOError) as e:
 
     early = EarlyStopping(monitor='val_accuracy', min_delta=0, patience=20, verbose=1, mode='auto')
 
-    batch_size = 256
-    epochs = 1000
+    batch_size = 32
+    epochs = 200
 
     cnn_train = cnn.fit(x_train, y_train_hot, batch_size=batch_size, epochs=epochs, verbose=1,
                         validation_data=(x_valid, y_valid_hot), callbacks=[early])

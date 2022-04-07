@@ -16,7 +16,6 @@ from tensorflow.python.keras.utils.np_utils import to_categorical
 tf.random.set_seed(42)
 
 NUM_IMAGES = 2592
-SCALE_FACTOR = 10
 IMG_SIZE = 96
 
 try:
@@ -101,8 +100,8 @@ except (OSError, IOError) as e:
 
     early = EarlyStopping(monitor='val_accuracy', min_delta=0, patience=20, verbose=1, mode='auto')
 
-    batch_size = 128
-    epochs = 100
+    batch_size = 16
+    epochs = 200
 
     cnn_train = cnn.fit(x_train, y_train_hot, batch_size=batch_size, epochs=epochs, verbose=1,
                         validation_data=(x_valid, y_valid_hot), callbacks=[early])
