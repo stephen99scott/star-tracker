@@ -8,6 +8,7 @@
 \usepackage{booktabs}
 \usepackage[acronym]{glossaries}
 \usepackage{float}
+\usepackage{stfloats}
 
 \usepackage[pagebackref,breaklinks,colorlinks]{hyperref}
 
@@ -148,6 +149,13 @@ The script used to prepare the dataset and subsequent scripts are available on G
 
 \begin{figure}[H]
   \centering
+   \includegraphics[width=0.9\linewidth, trim={13em, 16em, 22em, 7em}, clip]{cnn}
+   \caption{\acrshort{cnn} model architecture}
+   \label{fig:cnn}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
    \includegraphics[width=0.9\linewidth, trim={3em, 2em, 4em, 4em}, clip]{cnn_loss}
    \caption{\acrshort{cnn} training and validation loss}
    \label{fig:cnn_loss}
@@ -232,7 +240,7 @@ A similar result is observed for the \acrshort{cnn} trained with the augmented d
 
 Although the \acrshort{cnn} trained on the original dataset shows the highest accuracy, it is likely that in practice this model would not perform the best because it will not be robust to axial rotation. This robustness is crucial to the satellite as it is unlikely that the satellite will be rotated in such a way that it always aligns with the axial rotation of the images in the supervisory dataset. For this reason, the \acrshort{cnn} trained with the augmented dataset of rotated images is the better candidate for usage in practice.
 
-\begin{figure*}
+\begin{figure*}[h]
   \centering
   \begin{subfigure}{.33\linewidth}
     \includegraphics[width=\linewidth, trim={7em, 0em, 9em, 5em}, clip]{svm_cfsn_train}
@@ -248,7 +256,7 @@ Although the \acrshort{cnn} trained on the original dataset shows the highest ac
   \label{fig:svm_res}
 \end{figure*}
 
-\begin{figure*}
+\begin{figure*}[h]
   \centering
   \begin{subfigure}{.33\linewidth}
     \includegraphics[width=\linewidth, trim={7em, 0em, 9em, 5em}, clip]{cnn_cfsn_train}
@@ -269,7 +277,7 @@ Although the \acrshort{cnn} trained on the original dataset shows the highest ac
   \label{fig:cnn_res}
 \end{figure*}
 
-\begin{figure*}
+\begin{figure*}[b]
   \centering
   \begin{subfigure}{.33\linewidth}
     \includegraphics[width=\linewidth, trim={7em, 0em, 9em, 5em}, clip]{cnn_aug_cfsn_train}
