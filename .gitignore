@@ -5,8 +5,9 @@ code/*.npy
 code/figures
 project_guidelines.pdf
 sample_proposal.pdf
-Report/StarTracker*
-!Report/StarTracker.tex
+report/StarTracker*
+!report/StarTracker.tex
+!report/StarTracker.pdf
 proposal
 report/PaperForReview*
 report/RebuttalTemplate*
