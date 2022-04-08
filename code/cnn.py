@@ -27,7 +27,7 @@ except (OSError, IOError) as e:
         img = cv2.imread('star_tracker_dataset/images/stars_{0:03d}.png'.format(i))  # Open the image
 
         img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        img_lp = cv2.GaussianBlur(img_gray, (0, 0), 40)  # Apply Gaussian to image
+        img_lp = cv2.GaussianBlur(img_gray, (0, 0), 40)  # Apply Gaussian blur to image
         img_binary = cv2.threshold(img_lp, 128, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]  # Binarize image
 
         old_size = img.shape[:2]
@@ -35,14 +35,14 @@ except (OSError, IOError) as e:
         ratio = float(IMG_SIZE) / max(old_size)
         new_size = tuple([int(x * ratio) for x in old_size])
 
-        img_new = cv2.resize(img_binary, (new_size[1], new_size[0]))
+        img_new = cv2.resize(img_binary, (new_size[1], new_size[0]))  # Resize image to 96x96
 
         delta_w = IMG_SIZE - new_size[1]
         delta_h = IMG_SIZE - new_size[0]
         top, bottom = delta_h // 2, delta_h - (delta_h // 2)
         left, right = delta_w // 2, delta_w - (delta_w // 2)
 
-        img_final = cv2.copyMakeBorder(img_new, top, bottom, left, right, cv2.BORDER_CONSTANT, value=0)
+        img_final = cv2.copyMakeBorder(img_new, top, bottom, left, right, cv2.BORDER_CONSTANT, value=0)  # Pad image
         if i == 0:
             cv2.imshow("image", img_final)
             cv2.waitKey(0)
@@ -52,9 +52,9 @@ except (OSError, IOError) as e:
 label_lines = open('star_tracker_dataset/labels.txt', 'r').readlines()
 labels = [int(line.split()[0]) for line in label_lines]
 
-x_train, x_test, y_train, y_test = train_test_split(imgs, labels, test_size=1 / 10, random_state=42)
+x_train, x_test, y_train, y_test = train_test_split(imgs, labels, test_size=1 / 10, random_state=42)  # Test split
 
-x_train, x_valid, y_train, y_valid = train_test_split(x_train, y_train, test_size=2 / 9, random_state=42)
+x_train, x_valid, y_train, y_valid = train_test_split(x_train, y_train, test_size=2 / 9, random_state=42)  # Valid split
 
 height = imgs[0].shape[0]
 width = imgs[0].shape[1]
@@ -73,7 +73,7 @@ y_test_hot = to_categorical(y_test)
 
 num_classes = len(np.unique(labels))
 try:
-    cnn = keras.models.load_model('cnn')
+    cnn = keras.models.load_model('cnn')  # Load trained cnn if already created
 except (OSError, IOError) as e:
     cnn = Sequential()
     cnn.add(Conv2D(32, kernel_size=(3, 3), activation='linear', padding='same', input_shape=(height, width, 1)))
@@ -104,7 +104,7 @@ except (OSError, IOError) as e:
     epochs = 200
 
     cnn_train = cnn.fit(x_train, y_train_hot, batch_size=batch_size, epochs=epochs, verbose=1,
-                        validation_data=(x_valid, y_valid_hot), callbacks=[early])
+                        validation_data=(x_valid, y_valid_hot), callbacks=[early])  # Train CNN
     cnn.save('cnn')
 
     accuracy = cnn_train.history['accuracy']

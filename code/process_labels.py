@@ -1,11 +1,3 @@
-class Labels(dict):
-    def __getitem__(self, item):
-        for key in self.keys():
-            if item in key:
-                return super().__getitem__(key)
-        raise KeyError(item)
-
-
 data = open('star_tracker_dataset/ra_dec.txt', 'r').readlines()
 labels = open('star_tracker_dataset/labels.txt', 'w')
 
@@ -15,12 +7,12 @@ for line in data:
     ra, dec = int(ra), int(dec)
     if dec > 0:
         if ra < 180:
-            label = 0
+            label = 0  # North-East
         else:
-            label = 1
+            label = 1  # North-West
     else:
         if ra < 180:
-            label = 2
+            label = 2  # South-East
         else:
-            label = 3
+            label = 3  # South-West
     labels.write('{}\n'.format(label))

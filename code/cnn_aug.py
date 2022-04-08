@@ -28,19 +28,19 @@ except (OSError, IOError) as e:
         img = cv2.imread('star_tracker_dataset/images/stars_{0:03d}.png'.format(i))  # Open the image
 
         img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        img_lp = cv2.GaussianBlur(img_gray, (0, 0), 40)  # Apply Gaussian to image
+        img_lp = cv2.GaussianBlur(img_gray, (0, 0), 40)  # Apply Gaussian blur to image
         img_binary = cv2.threshold(img_lp, 128, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]  # Binarize image
 
         old_size = img.shape[:2]
 
-        img_rot_90 = cv2.rotate(img_binary, cv2.ROTATE_90_CLOCKWISE)
+        img_rot_90 = cv2.rotate(img_binary, cv2.ROTATE_90_CLOCKWISE)  # Perform image rotations for augmentation
         img_rot_180 = cv2.rotate(img_binary, cv2.ROTATE_180)
         img_rot_270 = cv2.rotate(img_binary, cv2.ROTATE_90_COUNTERCLOCKWISE)
 
         ratio = float(IMG_SIZE) / max(old_size)
         new_size = tuple([int(x * ratio) for x in old_size])
 
-        img_new = cv2.resize(img_binary, (new_size[1], new_size[0]))
+        img_new = cv2.resize(img_binary, (new_size[1], new_size[0]))  # Resize all images to 96x96
         img_rot_90_new = cv2.resize(img_rot_90, (new_size[1], new_size[0]))
         img_rot_180_new = cv2.resize(img_rot_180, (new_size[1], new_size[0]))
         img_rot_270_new = cv2.resize(img_rot_270, (new_size[1], new_size[0]))
@@ -50,7 +50,7 @@ except (OSError, IOError) as e:
         top, bottom = delta_h // 2, delta_h - (delta_h // 2)
         left, right = delta_w // 2, delta_w - (delta_w // 2)
 
-        img_final = cv2.copyMakeBorder(img_new, top, bottom, left, right, cv2.BORDER_CONSTANT, value=0)
+        img_final = cv2.copyMakeBorder(img_new, top, bottom, left, right, cv2.BORDER_CONSTANT, value=0)  # Pad images
         img_rot_90_final = cv2.copyMakeBorder(img_rot_90_new, top, bottom, left, right, cv2.BORDER_CONSTANT, value=0)
         img_rot_180_final = cv2.copyMakeBorder(img_rot_180_new, top, bottom, left, right, cv2.BORDER_CONSTANT, value=0)
         img_rot_270_final = cv2.copyMakeBorder(img_rot_270_new, top, bottom, left, right, cv2.BORDER_CONSTANT, value=0)
@@ -72,7 +72,7 @@ except (OSError, IOError) as e:
         imgs[i + NUM_IMAGES] = img_rot_90_final
         imgs[i + 2 * NUM_IMAGES] = img_rot_180_final
         imgs[i + 3 * NUM_IMAGES] = img_rot_270_final
-    imgs.dump('imgs_binary_augmented.npy')
+    imgs.dump('imgs_binary_augmented.npy')  # Save the image array
 
 label_lines = open('star_tracker_dataset/labels_augmented.txt', 'r').readlines()
 labels = [int(line.split()[0]) for line in label_lines]
@@ -98,7 +98,7 @@ y_test_hot = to_categorical(y_test)
 
 num_classes = len(np.unique(labels))
 try:
-    cnn = keras.models.load_model('cnn_augmentation')
+    cnn = keras.models.load_model('cnn_augmentation')  # Load the CNN if already trained
 except (OSError, IOError) as e:
     cnn = Sequential()
     cnn.add(Conv2D(32, kernel_size=(3, 3), activation='linear', padding='same', input_shape=(height, width, 1)))

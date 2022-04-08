@@ -12,7 +12,7 @@ NUM_CONTOURS = 5
 NUM_FEATURES = 16
 
 try:
-    features = np.load('features.npy', allow_pickle=True)
+    features = np.load('features.npy', allow_pickle=True)  # Load features array if already created locally
 except (OSError, IOError) as e:
     features = np.zeros((NUM_IMAGES, NUM_FEATURES))
 
@@ -22,7 +22,7 @@ except (OSError, IOError) as e:
 
         # PREPROCESSING
         img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)  # Convert image to grayscale
-        img_lp = cv2.GaussianBlur(img_gray, (0, 0), 2)  # Apply Gaussian to image
+        img_lp = cv2.GaussianBlur(img_gray, (0, 0), 2)  # Apply Gaussian blur to image
         img_binary = cv2.threshold(img_lp, 128, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]  # Binarize image
 
         # FEATURE EXTRACTION
@@ -35,22 +35,22 @@ except (OSError, IOError) as e:
             plt.show()
             cv2.imwrite('figures/gauss.png', img_lp)
             cv2.imwrite('figures/binary.png', img_binary)
-            img_cnt = cv2.drawContours(img.copy(), contours, -1, (0, 0, 255), 3)
+            img_cnt = cv2.drawContours(img.copy(), contours, -1, (0, 0, 255), 3)  # Draw contours on the image
             cv2.imwrite('figures/all_contours.png', img_cnt)
             cv2.imshow('Contours', img_cnt)
             cv2.waitKey(0)
-        areas = np.array([cv2.contourArea(cnt) for cnt in contours])
-        idxs = areas.argsort()[::-1]
-        biggest_contour = contours[idxs[0]]
+        areas = np.array([cv2.contourArea(cnt) for cnt in contours])  # Get the areas of the contours
+        idxs = areas.argsort()[::-1]  # Sort the contours by area
+        biggest_contour = contours[idxs[0]]  # Get the biggest contour
         contour_centers = np.zeros((NUM_CONTOURS + 1, 2))
-        (x, y), radius = cv2.minEnclosingCircle(biggest_contour)
-        features[i][0] = radius
+        (x, y), radius = cv2.minEnclosingCircle(biggest_contour)  # Get the radius of the biggest contour
+        features[i][0] = radius  # Assign radius to feature vector
         contour_centers[0] = [x, y]
 
         mask = np.zeros_like(img_binary)
         cx, cy = int(x), int(y)
-        cv2.circle(mask, (cx, cy), 500, 255, -1)
-        masked = cv2.bitwise_and(img_binary, img_binary, mask=mask)
+        cv2.circle(mask, (cx, cy), 500, 255, -1)  # Create circular mask around largest contour
+        masked = cv2.bitwise_and(img_binary, img_binary, mask=mask)  # Apply circular mask
         if i == 0:
             plt.subplot(121), plt.imshow(mask, cmap='gray')
             plt.title('Mask'), plt.xticks([]), plt.yticks([])
@@ -59,17 +59,17 @@ except (OSError, IOError) as e:
             plt.show()
             cv2.imwrite('figures/mask.png', mask)
             cv2.imwrite('figures/masked.png', masked)
-        pixels = cv2.countNonZero(masked)
-        features[i][1] = pixels
+        pixels = cv2.countNonZero(masked)  # Count non-zero pixels in masked region
+        features[i][1] = pixels  # Assign count to feature vector
 
-        contours, hierarchy = cv2.findContours(masked, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+        contours, hierarchy = cv2.findContours(masked, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)  # Find contours again
         if i == 0:  # Visualize some data if this is the first iteration
             img_cnt = cv2.drawContours(img.copy(), contours, -1, (255, 0, 0), 3)
             cv2.imwrite('figures/local_contours.png', img_cnt)
             cv2.imshow('Contours', img_cnt)
             cv2.waitKey(0)
-        areas = np.array([cv2.contourArea(cnt) for cnt in contours])
-        idxs = areas.argsort()[::-1][:NUM_CONTOURS]
+        areas = np.array([cv2.contourArea(cnt) for cnt in contours])  # Get contour areas
+        idxs = areas.argsort()[::-1][:NUM_CONTOURS]  # Sort contours by area
         biggest_contours = [contours[i] for i in idxs]
         contour_centers = np.zeros((NUM_CONTOURS, 2))
         for j in range(1, NUM_CONTOURS):
@@ -77,28 +77,28 @@ except (OSError, IOError) as e:
                 contour_centers[j] = contour_centers[0]
                 continue
             (x, y), radius = cv2.minEnclosingCircle(biggest_contours[j])
-            features[i][j + 1] = radius
+            features[i][j + 1] = radius  # Assign radii to feature vector
             contour_centers[j] = [x, y]
-        contour_centers_norms = np.linalg.norm(contour_centers - contour_centers[:, None], axis=-1)
+        contour_centers_norms = np.linalg.norm(contour_centers - contour_centers[:, None], axis=-1)  # Compute distances
         s = 0
-        for j in range(1, NUM_CONTOURS):
+        for j in range(1, NUM_CONTOURS):  # Assign distances to feature vector
             features[i][NUM_CONTOURS + 1 + s:2 * NUM_CONTOURS + s + 1 - j] = contour_centers_norms[j:NUM_CONTOURS,
                                                                              j - 1]
             s += NUM_CONTOURS - j
 
-    features.dump('features.npy')
+    features.dump('features.npy')  # Save feature array
 
 label_lines = open('star_tracker_dataset/labels.txt', 'r').readlines()
 labels = [int(line.split()[0]) for line in label_lines]
 
-x_train, x_test, y_train, y_test = train_test_split(features, labels, test_size=1 / 5, random_state=42)
+x_train, x_test, y_train, y_test = train_test_split(features, labels, test_size=1 / 5, random_state=42)  # Split data
 
-x_train_normalized, norm = preprocessing.normalize(x_train, axis=0, return_norm=True)
+x_train_normalized, norm = preprocessing.normalize(x_train, axis=0, return_norm=True)  # Normalize training data
 
-covariance_matrix = np.cov(x_train_normalized.T)
-eigenvalues, eigenvectors = np.linalg.eig(covariance_matrix)
+covariance_matrix = np.cov(x_train_normalized.T)  # Get covariance matrix
+eigenvalues, eigenvectors = np.linalg.eig(covariance_matrix)  # Get eigenvalues/vectors
 projection = (eigenvectors.T[:][:3]).T
-pca_train = x_train_normalized.dot(projection)
+pca_train = x_train_normalized.dot(projection)  # Perform PCA
 
 fig = plt.figure(figsize=(12, 12))
 ax = fig.add_subplot(projection='3d')
@@ -108,12 +108,12 @@ plt.show()
 parameters = {'kernel': ('linear', 'rbf'), 'C': [0.01, 0.1, 1, 10, 100, 1000],
               'gamma': [0.001, 0.01, 0.1, 1, 10, 100, 1000]}
 clf = GridSearchCV(SVC(), parameters, verbose=3)
-clf.fit(x_train_normalized, y_train)
+clf.fit(x_train_normalized, y_train)  # Hyperparameter tuning
 print(clf.best_score_)
 print(clf.best_estimator_)
 print(clf.best_params_)
 labels_verbose = ["North-East", "North-West", "South-East", "South-West"]
-model = SVC(kernel='rbf', gamma=1000, C=100)
+model = SVC(kernel='rbf', gamma=1000, C=100)  # Create SVM model
 model.fit(x_train_normalized, y_train)
 y_pred = model.predict(x_train_normalized)
 print("\nCONFUSION MATRIX TRAIN")
