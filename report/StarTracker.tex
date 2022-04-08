@@ -69,7 +69,7 @@ These two approaches are similar in that they rely on on-board datasets of image
 \section{Proposed Method}
 \label{sec:method}
 
-The proposed method seeks to eliminate the need for a star lookup table by directly classifying attitude vectors from input star images. To accomplish this, the algorithm relies on a dataset of star field images with labelled right ascension and declination values with respect to the center pixel of the image. A limitation of this approach is that it is sensitive to the field of view of images in the dataset. Thus, for the algorithm to be useful for a particular application, the practitioner must create a dataset of images for the field of view corresponding to the camera used for the application. This field of view can be determined from the focal length of the camera CITE. Additionally, as the method is proposed herein, the algorithm is sufficient only for vague attitude estimation as will be described in \ref{sec:results}.
+The proposed method seeks to eliminate the need for a star lookup table by directly classifying attitude vectors from input star images. To accomplish this, the algorithm must be trained using a dataset of star field images with labelled right ascension and declination values with respect to the center pixel of the image. This dataset is for usage in creating a supervised learning model ahead of the star tracker implementation, and thus the dataset is not required on-board the satellite. A limitation of this approach is that it is sensitive to the field of view of images in the dataset. Thus, for the algorithm to be useful for a particular application, the practitioner must create a dataset of images for the field of view corresponding to the camera used for the application. This field of view can be determined from the focal length of the camera CITE. Additionally, as the method is described herein, the algorithm is sufficient only for vague attitude estimation as will be described in Section \ref{sec:results}.
 
 \subsection{Dataset Generation}
 
@@ -206,6 +206,30 @@ The script used to prepare the dataset and subsequent scripts are available on G
 \section{Results}
 \label{sec:results}
 
+\begin{table}[H]
+  \centering
+  \begin{tabular}{*4c}
+    \toprule
+    Method & \multicolumn{3}{c}{Accuracy} \\
+    \midrule
+    {} & Training & Validation & Test \\
+    \acrshort{svm} & 98.0\% & NA & 88.1\% \\
+    \acrshort{cnn} & 98.6\% & 90.9\% & 96.2\% \\
+    \acrshort{cnn} (Augmented) & 98.6\% & 90.4\% & 91.1\% \\
+    \bottomrule
+  \end{tabular}
+  \caption{Comparison of classification accuracy for all methods}
+  \label{tab:accuracy}
+\end{table}
+
+The accuracy for all proposed methods is summarized in Table \ref{tab:accuracy}. From the results, it appears that all 3 supervised models suffer from overfitting as the classification was much more accurate on the training sets than the validation and test sets. The \acrshort{cnn} without augmented data performed the best on the test set with 96.2\% accuracy followed by the same \acrshort{cnn} model trained with the augmented dataset with an accuracy of 91.1\%. The \acrshort{svm} performed the worst of the 3 models with an accuracy of 88.1\% on the test set.
+
+The primary source of error in the \acrshort{svm} algorithm is due to the fact that the features are not exactly unique to the class around the class boundaries. This is due to the fact that the algorithm uses the brightest star and distances to the nearest stars around the brightest star. For example, the brightest star could be present in one image labelled as the North-East sky, but also be visible as the brightest star in an image labelled as the North-West sky. This error is specifically noticeable around the South-East/West sky boundary, which can be observed from the high amount of misclassified stars in the training and test data confusion matrices shown in Figure \ref{fig:svm_res}.
+
+A similar result is observed for the \acrshort{cnn} trained with the augmented data set in that there is a large number of misclassified stars between the South-East/West skies. From this observation, it seems that the \acrshort{cnn} trained on the augmented dataset has created a model which is similar to the \acrshort{svm} trained with the features described in Section \ref{sec:method}. Intuitively, this observation makes sense because the dataset was augmented by rotating the images around the center pixel, which has the impact of making the model more robust with respect to axial rotation. Similarly, the features chosen to train the \acrshort{svm} were chosen such that they would be the same feature values regardless of rotation around the axis. For example, the distance of the brightest star to other stars does not change as the field of view is rotated around the center pixel.
+
+Although the \acrshort{cnn} trained on the original dataset shows the highest accuracy, it is likely that in practice this model would not perform the best because it will not be robust to axial rotation. This robustness is crucial to the satellite as it is unlikely that the satellite will be rotated in such a way that it always aligns with the axially rotation of the images in the supervisory dataset. For this reason, the \acrshort{cnn} trained with the augmented dataset of rotated images is the better candidate for usage in practice.
+
 \begin{figure*}
   \centering
   \begin{subfigure}{.33\linewidth}
@@ -264,26 +288,15 @@ The script used to prepare the dataset and subsequent scripts are available on G
   \label{fig:cnn_aug_res}
 \end{figure*}
 
-\begin{table}[H]
-  \centering
-  \begin{tabular}{*4c}
-    \toprule
-    Method & \multicolumn{3}{c}{Accuracy} \\
-    \midrule
-    {} & Training & Validation & Test \\
-    \acrshort{svm} & 98.0\% & NA & 88.1\% \\
-    \acrshort{cnn} & 98.6\% & 90.9\% & 96.2\% \\
-    \acrshort{cnn} (Augmented) & 98.6\% & 90.4\% & 91.1\% \\
-    \bottomrule
-  \end{tabular}
-  \caption{Comparison of classification accuracy for all methods}
-  \label{tab:accuracy}
-\end{table}
-
-
 
 \section{Conclusion}
 \label{sec:conclusion}
+
+In this paper, a method was proposed to perform satellite attitude determination without an on-board star database. Two approaches were evaluated, both of which relying on usage of supervised learning against a dataset of simulated star field images. The first approach utilized manual feature extraction and classification with an \acrshort{svm}, and the second used a \acrshort{cnn}. The results showed that the \acrshort{cnn} model performed with the highest accuracy on the test set; however, it was determined that the \acrshort{cnn} trained on the augmented dataset would be more useful in practice due to the robustness to axial rotation.
+
+The results indicate that the proposed methods are not sufficient to perform highly accurate attitude determination due to the fact that the accuracies on the test set are relatively poor considering that the sky was partitioned into massive ranges, resulting in only 4 classes. Further tests were performed by increasing the number of classes and hence increasing the precision of the algorithm; however, test set accuracy was reduced significantly with small increases to the number of classes.
+
+In practice, it is useful for satellites to have arcsecond precision from the attitude estimation, which can be achieved with the usage of star lookup tables. By using the star lookup tables, the role of the image processing algorithm can be solely of identifying star patterns which can be used to lookup a star in the on-board database. The exact right ascension and declination can be taken from the database based on the identified star and from these angles, and knowing the pixel location of the star in the image, a much more accurate attitude can be determined from the image.
 
 
 %%%%%%%%% REFERENCES
