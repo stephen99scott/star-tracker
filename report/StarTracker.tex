@@ -173,9 +173,14 @@ The hyperparmeters of the \acrshort{svm} were tuned and the final values used we
 \end{figure}
 
 \section{Alternate Method}
+
+In this section, an alternative method is proposed which attempts to use a \acrfull{cnn} to classify the attitude based on the input image without any manual feature extraction. The \acrshort{cnn} is applied to the original dataset, then an augmented dataset is created by adding in rotated images to the dataset to simulate satellite rotation.
+
 \label{sec:alt_method}
 
-\subsection{\acrlong{cnn}}
+\subsection{\acrshort{cnn}}
+
+The proposed model architecture for the \acrshort{cnn} is shown in Figure \ref{fig:cnn}. The model includes several convolution layers, as well as max pooling and dropout. Dropout was implemented in an attempt to reduce model overfitting. The input to the \acrshort{cnn} is a gray scale image of dimensions 96x96. Thus, the input images had to be scaled down to 96x96 and padded with zeros accordingly to fit the input image size. Also, since the input image matrices are sparse due to the nature of the stars, the images were blurred significantly and binarized in an attempt to make it easier for the \acrshort{cnn} to recognize significant patterns. The images were blurred using a Gaussian kernel ($\sigma = 40$) similar to the \acrshort{svm} method.
 
 \begin{figure}[H]
   \centering
@@ -183,6 +188,8 @@ The hyperparmeters of the \acrshort{svm} were tuned and the final values used we
    \caption{\acrshort{cnn} model architecture}
    \label{fig:cnn}
 \end{figure}
+
+The original dataset was split into 3 groups 20\% for validation and 10\% for testing. The validation test set was used to cross validate the model during training. The hyperparmeters of the model were tuned and the final values used were a learning rate of 0.001 with the Adam optimizer and a batch size of 16.  The resulting loss and accuracy on the training and validation sets for the \acrshort{cnn} are shown in Figures \ref{fig:cnn_loss} and \ref{fig:cnn_accuracy}. The confusion matrices for the training, validation, and test set are shown in Figure \ref{fig:cnn_res}.
 
 \begin{figure}[H]
   \centering
@@ -199,6 +206,8 @@ The hyperparmeters of the \acrshort{svm} were tuned and the final values used we
 \end{figure}
 
 \subsection{Dataset Augmentation}
+
+Training the \acrshort{cnn} on the original dataset may cause the model to recognize patterns that are not solving the exact problem at hand. The nature of the attitude determination problem is such that the identified class should be robust to rotation around the axis (or around the middle pixel in this cause). For the \acrshort{svm}, the features were chosen such that they would be the same values regardless of the image's rotation. However, to replicate this in the \acrshort{cnn} model, the dataset must be augmented with rotated images. Thus, the dataset was augmented by rotating each image by 90, 180, and 270 degrees. The final dataset for the augmented \acrshort{cnn} has 10,368 images. An example of an augmented image is shown in Figure \ref{fig:cnn_aug_imgs}.
 
 \begin{figure}[H]
   \centering
@@ -228,6 +237,8 @@ The hyperparmeters of the \acrshort{svm} were tuned and the final values used we
   \caption{Example of augmented dataset for training the \acrlong{cnn}}
   \label{fig:cnn_aug_imgs}
 \end{figure}
+
+The same model architecture was used and the hyperparameters were retuned and a learning rate of 0.001 with the Adam optimizer was used again; however, the batch size was increased to 32. The resulting loss and accuracy on the training and validation sets for the augmented \acrshort{cnn} are shown in Figures \ref{fig:cnn_aug_loss} and \ref{fig:cnn_aug_accuracy}. The confusion matrices for the training, validation, and test set are shown in Figure \ref{fig:cnn_aug_res}.
 
 \begin{figure}[H]
   \centering
