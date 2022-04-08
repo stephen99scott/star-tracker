@@ -1,0 +1,44 @@
+LabelMgr.deleteAllLabels();
+LabelMgr.labelScreen("Setting up...", 200, 200, true, 20, "#0000ff");
+core.resetOutput();
+core.saveOutputAs("ra_dec.txt");
+core.setTimeRate(0);
+LandscapeMgr.setFlagLandscape(false);
+LandscapeMgr.setFlagAtmosphere(false);
+LandscapeMgr.setFlagFog(false);
+LandscapeMgr.setFlagCardinalPoints(false);
+SolarSystem.setFlagLabels(false);
+Satellites.setFlagHintsVisible(false);
+Satellites.setFlagLabelsVisible(false);
+MeteorShowers.setEnableMarker(false);
+MeteorShowers.setEnableLabels(false);
+SporadicMeteorMgr.setFlagShow(false);
+GridLinesMgr.setFlagGridlines(false);
+StarMgr.setLabelsAmount(0);
+SolarSystem.setFlagPlanets(false);
+NebulaMgr.setFlagShow(false);
+StelSkyLayerMgr.showLayer('Nebulae', false);
+MilkyWay.setIntensity(0);
+
+StelMovementMgr.toggleMountMode();
+core.setGuiVisible(false);
+core.setProjectionMode("ProjectionPerspective");
+StelMovementMgr.zoomTo(48.55, 1);
+core.wait(3);
+
+LabelMgr.deleteAllLabels();
+LabelMgr.labelScreen("Capturing images", 200, 200, true, 20, "#0000ff");
+core.wait(2);
+LabelMgr.deleteAllLabels();
+core.wait(2);
+
+for (i=0; i<360; i=i+5) {
+    for (j=-90; j<90; j=j+5) {
+        core.moveToRaDecJ2000(i, j, 0);
+        core.output(i + "_" + j);
+        core.screenshot("stars_",false,"D:/Documents/SCHOOL/Courses/Current/COMPENG 4TN4/Project/Code/star_tracker_dataset/images",false,"png");
+    }
+}
+
+LabelMgr.deleteAllLabels();
+LabelMgr.labelScreen("Done capturing", 200, 200, true, 20, "#0000ff");
