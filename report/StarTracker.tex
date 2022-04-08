@@ -72,7 +72,10 @@ Kim and Bang also proposed utilizing a neural network; however, rather than elim
 \section{Proposed Method}
 \label{sec:method}
 
-The proposed method seeks to explore the research by Hong and Dickerson in ~\cite{neural1} in eliminating the need for a star lookup table by directly classifying attitude vectors from input star images. To accomplish this, the algorithm must be trained using a dataset of star field images with labelled right ascension and declination values with respect to the center pixel of the image. This dataset is for usage in creating a supervised learning model ahead of the star tracker implementation, and thus the dataset is not required on-board the satellite. A limitation of this approach is that it is sensitive to the field of view of images in the dataset. Thus, for the algorithm to be useful for a particular application, the practitioner must create a dataset of images for the field of view corresponding to the camera used for the application. This field of view can be determined from the focal length of the camera. Additionally, as the method is described herein, the algorithm is sufficient only for vague attitude estimation as will be described in Section \ref{sec:results}.
+The proposed method seeks to eliminate the need for a star lookup table by directly classifying attitude vectors from input star images. To accomplish this, the algorithm is trained using a dataset of star field images with labelled right ascension and declination values with respect to the center pixel of the image. This dataset is for usage in creating a supervised learning model ahead of the star tracker implementation, and thus the dataset is not required on-board the satellite. A limitation of this approach is that it is sensitive to the field of view of images in the dataset. Thus, for the algorithm to be useful for a particular application, the practitioner must create a dataset of images for the field of view corresponding to the camera used for the application. Additionally, as the method is described herein, the algorithm is sufficient only for vague attitude estimation as will be described in Section \ref{sec:results}.
+
+The algorithm involves feature extraction based on the brightest star in the binary star image, and the Euclidean distance to stars in the neighbourhood of the brightest star. This is similar to the approach presented by Delabie \etal in ~\cite{optimal}. Using these feature vectors, a \acrfull{svm} is trained using a simulated dataset of star field images to maximize the distance between data clusters. Images are labelled based on their right ascension and declination.
+
 
 \subsection{Dataset Generation}
 
@@ -91,12 +94,25 @@ The script used to prepare the dataset and subsequent scripts are available on G
 
 \subsection{Preprocessing}
 
+All images are preprocessed by first converting to gray scale. A Gaussian kernel ($\sigma = 2$) is applied to the gray scale images to reduce normal noise which is common in star images. The kernel size of the Gaussian filter is computed based on the sigma value as shown in Equation \ref{eq:gauss}~\cite{opencv}. The images in the simulated dataset do not have significant white noise; however, the Gaussian blur should be sufficient to eliminate the noise if it were present. The result of applying the Gaussian filter is shown in Figure \ref{fig:star_gauss}.
+
+\begin{equation}
+\begin{split}
+  G_i = \alpha * e^{-(i-(ksize-1)/2)^2/(2*\sigma ^2)} \\
+  i = 0..ksize-1\\
+  \sum_i G_i = 1
+  \label{eq:gauss}
+\end{split}
+\end{equation}
+
 \begin{figure}[H]
   \centering
    \includegraphics[width=0.9\linewidth]{gauss}
    \caption{Gaussian blur applied to star image}
    \label{fig:star_gauss}
 \end{figure}
+
+Next, the Gaussian blurred image is binarized using a binary threshold. The Otsu algorithm is used to select the optimal threshold value~\cite{opencv}. The threshold can also be chosen manually with little effort since all non-zero pixels in the image are assumed to be stars so a fairly low threshold can be used. The binarized image is shown in Figure \ref{fig:star_binary}. Each image in the dataset is passed through these steps of preprocessing before proceeding to feature extraction.
 
 \begin{figure}[H]
   \centering
@@ -107,12 +123,16 @@ The script used to prepare the dataset and subsequent scripts are available on G
 
 \subsection{Feature extraction}
 
+After preprocessing, all of the contours are found in the image and the result is shown in red in Figure \ref{fig:star_contours}. All found contours are assumed to be stars in the binarized image.
+
 \begin{figure}[H]
   \centering
    \includegraphics[width=0.9\linewidth]{all_contours}
    \caption{Result of locating global contours}
    \label{fig:star_contours}
 \end{figure}
+
+The largest contour is found by comparing the areas of all the detected contours which is an O(n) operation that scales linearly with the number of detected contours. The radius of the largest contour is used as the first element of the feature vector. A circular mask of pixel radius 500 is created with its origin at the pixel location of the largest contour. The resulting mask is shown in Figure \ref{fig:star_mask}. The number of non-zero pixels in the masked region are counted and stored as the second element of the feature vector.
 
 \begin{figure}[H]
   \centering
@@ -121,6 +141,8 @@ The script used to prepare the dataset and subsequent scripts are available on G
    \label{fig:star_mask}
 \end{figure}
 
+The mask is applied to the binary image in order to isolate the stars that are nearest to the brightest star in the image. The resulting masked image is shown in Figure \ref{fig:star_masked}.
+
 \begin{figure}[H]
   \centering
    \includegraphics[width=0.9\linewidth]{masked}
@@ -128,12 +150,20 @@ The script used to prepare the dataset and subsequent scripts are available on G
    \label{fig:star_masked}
 \end{figure}
 
+Next, only the contours in the masked region are used for further feature extraction. Thus, the relevant contours to the feature vector are shown in blue in Figure \ref{fig:star_local_contours}.
+
 \begin{figure}[H]
   \centering
    \includegraphics[width=0.9\linewidth]{local_contours}
    \caption{Result of locating contours in the masked region}
    \label{fig:star_local_contours}
 \end{figure}
+
+The 4 next-biggest contours in the region localized around the biggest contour are used to attain the remaining feature vector elements. The contour radius of each of the 4 next-biggest contours in the masked region are used as feature vector elements 3 through 6. Next, the Euclidean distance is calculated between each of these contours and the largest contour which corresponds to feature vector elements 7 through 16. In total, 16 features are used to train the \acrshort{svm}.
+
+To train the \acrshort{svm}, the dataset is split randomly using 20\% of the images for the test set. The feature vectors are normalized using the training set as a reference, and the norm of the training data features is applied to the feature vectors of the test set. The results are discussed in Section \ref{sec:results} and the confusion matrices for the training and test data are shown in Figure \ref{fig:svm_res}. Also, \acrfull{pca} was performed on the normalized training data and the 3D visualization of the \acrshort{pca} is shown in Figure \ref{fig:pca}. From the visualization, it is clear that there are some outliers to the transformed data. Each color represents one of the 4 classes and some groupings can be seen in the data.
+
+The hyperparmeters of the \acrshort{svm} were tuned and the final values used were the radial basis function kernel with $\gamma = 1000$ and $C = 100$.
 
 \begin{figure}[H]
   \centering
